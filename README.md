@@ -75,7 +75,7 @@ writing a new repository class; nothing above it changes.
 Requirements: Python 3.12+, [uv](https://docs.astral.sh/uv/), Docker.
 
 ```bash
-git clone https://github.com/AdarshN99/dealdesk && cd dealdesk
+git clone https://github.com/adarshnandina/dealdesk && cd dealdesk
 cp .env.example .env          # add your API keys (see below)
 make install                  # uv sync + pre-commit hooks
 make up                       # Postgres in Docker, migrations, demo data
@@ -90,16 +90,9 @@ http://localhost:8000/docs.
 | Key | Where | Cost |
 |---|---|---|
 | `LANGSMITH_API_KEY` | smith.langchain.com → Settings → API Keys | Free Developer plan (5k traces/month) |
-| `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | Pay-as-you-go; a full eval run with Haiku costs cents |
+| `ANTHROPIC_API_KEY` | console.anthropic.com → API Keys | Pay-as-you-go |
 | `OPENAI_API_KEY` | platform.openai.com → API keys | Pay-as-you-go |
 
-**Free OpenAI-model option:** use [GitHub Models](https://github.com/marketplace/models).
-Create a GitHub token with the `models` permission, put it in `OPENAI_API_KEY`, set
-`DEALDESK_OPENAI_BASE_URL=https://models.github.ai/inference`, and use model names like
-`openai/gpt-4.1-mini`. The free tier is rate-limited, so run evals with `--concurrency 1`.
-
-**Supabase:** point `DEALDESK_DATABASE_URL` at your project's session-pooler connection
-string (with the `postgresql+psycopg://` prefix) and run `uv run dealdesk db upgrade`.
 
 ## Usage
 
@@ -226,14 +219,3 @@ scripted fake chat model, so they are deterministic and free. They cover the rep
 tools, graph routing (approve, reject, mixed batches, memory, restart recovery with the
 Postgres checkpointer), the API (auth, webhook signature and idempotency), MCP over
 stdio, and the eval suite.
-
-## Roadmap
-
-- HubSpot adapter implementing the repository interface (CRM API + webhooks v3 signatures)
-- Streaming responses (SSE) and async SQLAlchemy for higher concurrency
-- Prompt versioning in the LangSmith Prompt Hub; online evals on sampled production traces
-- Per-user auth and permissions on write tools; rate limiting
-
-## License
-
-MIT
