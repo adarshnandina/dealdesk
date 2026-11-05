@@ -1,0 +1,50 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: dealdesk
+          POSTGRES_PASSWORD: dealdesk
+          POSTGRES_DB: dealdesk_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U dealdesk" --health-interval 5s --health-retries 10
+    env:
+      DEALDESK_TEST_DATABASE_URL: postgresql+psycopg://dealdesk:dealdesk@localhost:5432/dealdesk_test
+      DEALDESK_DATABASE_URL: postgresql+psycopg://dealdesk:dealdesk@localhost:5432/dealdesk_test
+      LANGSMITH_TRACING: "false"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+      - run: uv sync --frozen
+      - name: Lint
+        run: uv run ruff check . && uv run ruff format --check .
+      - name: Type check
+        run: uv run mypy
+      - name: Tests
+        run: uv run pytest --cov=dealdesk --cov-report=term-missing
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: false
+          tags: dealdesk:ci
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

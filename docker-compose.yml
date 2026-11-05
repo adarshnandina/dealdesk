@@ -1,0 +1,43 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: dealdesk
+      POSTGRES_PASSWORD: dealdesk
+      POSTGRES_DB: dealdesk
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/create-test-db.sql:/docker-entrypoint-initdb.d/create-test-db.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U dealdesk"]
+      interval: 5s
+      retries: 10
+
+  # One-off job: apply migrations and load demo data.
+  migrate:
+    build: .
+    profiles: ["app"]
+    env_file: .env
+    environment:
+      DEALDESK_DATABASE_URL: postgresql+psycopg://dealdesk:dealdesk@db:5432/dealdesk
+    command: sh -c "dealdesk db upgrade && dealdesk db seed"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  api:
+    build: .
+    profiles: ["app"]
+    env_file: .env
+    environment:
+      DEALDESK_DATABASE_URL: postgresql+psycopg://dealdesk:dealdesk@db:5432/dealdesk
+    ports:
+      - "8000:8000"
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+
+volumes:
+  pgdata:
